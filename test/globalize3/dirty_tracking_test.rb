@@ -13,6 +13,14 @@ class DirtyTrackingTest < Test::Unit::TestCase
     assert_included 'content', post.changed
   end
 
+  test "dirty tracking is not triggered when attribute does not change" do
+    post = Post.create(:title => 'title', :content => 'content')
+    assert_equal [], post.changed
+
+    post.title = 'title'
+    assert_equal [], post.changed
+  end
+
   test 'dirty tracking works per a locale' do
     post = Post.create(:title => 'title', :content => 'content')
     assert_equal [], post.changed

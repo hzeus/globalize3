@@ -46,7 +46,7 @@ module Globalize
             options = {:locale => options}
           end
           options = {:locale => nil}.merge(options)
-          attribute_will_change! name.to_s
+          attribute_will_change! name.to_s unless value == read_attribute(name, options)
           the_locale = options[:locale] || Globalize.locale
           self.translations.reject!{|t| t.new_record? && t.locale != the_locale}
           globalize.write(the_locale, name, value)
