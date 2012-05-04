@@ -40,14 +40,14 @@ module Globalize
 
       def translation_class
         @translation_class ||= begin
-          klass = self.const_get(:Translation) rescue nil
-          if klass.nil? || klass.class_name != (self.class_name + "Translation")
-            klass = self.const_set(:Translation, Class.new(Globalize::ActiveRecord::Translation))
-          end
+                                 klass = self.const_get(:Translation) rescue nil
+                                 if klass.nil? || klass.class_name != (self.class_name + "Translation")
+                                   klass = self.const_set(:Translation, Class.new(Globalize::ActiveRecord::Translation))
+                                 end
 
-          klass.belongs_to name.underscore.gsub('/', '_')
-          klass
-        end
+                                 klass.belongs_to name.underscore.gsub('/', '_')
+                                 klass
+                               end
       end
 
       def translations_table_name
@@ -98,6 +98,8 @@ module Globalize
           scope = scope.send(:"scoped_by_#{unt}", arguments[index])
         end
 
+        puts scope.to_sql if $FOO == 1
+
         if match.is_a?(::ActiveRecord::DynamicFinderMatch)
           if match.instantiator? and scope.blank?
             return scope.find_or_instantiator_by_attributes match, attribute_names, *arguments, &block
@@ -122,31 +124,41 @@ module Globalize
         end
 
         record = if ::ActiveRecord::VERSION::STRING < "3.1.0"
-          class_name.constantize.new do |r|
-            r.send(:attributes=, protected_attributes_for_create, true) unless protected_attributes_for_create.empty?
-            r.send(:attributes=, unprotected_attributes_for_create, false) unless unprotected_attributes_for_create.empty?
-          end
-        else
-          class_name.constantize.new(protected_attributes_for_create, options) do |r|
-            r.assign_attributes(unprotected_attributes_for_create, :without_protection => true)
-          end
-        end
+                   class_name.constantize.new do |r|
+                     r.send(:attributes=, protected_attributes_for_create, true) unless protected_attributes_for_create.empty?
+                     r.send(:attributes=, unprotected_attributes_for_create, false) unless unprotected_attributes_for_create.empty?
+                   end
+                 else
+                   class_name.constantize.new(protected_attributes_for_create, options) do |r|
+                     r.assign_attributes(unprotected_attributes_for_create, :without_protection => true)
+                   end
+                 end
         yield(record) if block_given?
         record.send(match.bang? ? :save! : :save) if match.instantiator.eql?(:create)
 
         record
       end
 
-    protected
+      protected
 
       def translated_attr_accessor(name)
-        define_method(:"#{name}=") do |value|
-          write_attribute(name, value)
+        define_method "#{name}=" do |value|
+          if new_record? && translation
+            translation.send "#{name}=", value
+          else
+            assign_attributes(translations_attributes: translation_attributes.merge({name => value}))
+          end
         end
-        define_method(name) do |*args|
-          read_attribute(name, {:locale => args.first})
+
+        define_method name do |*args|
+          locale = args.first || Globalize.locale
+          translation_for(locale).try name
         end
+
+        attr_accessible name
+
         alias_method :"#{name}_before_type_cast", name
+        alias_method :"#{name}?", name
       end
 
     end

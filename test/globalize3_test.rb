@@ -11,25 +11,23 @@ class Globalize3Test < Test::Unit::TestCase
     assert_equal [], Post.new.translations
   end
 
-  test "create uses the given locale" do
-    post = Post.create(:title => 'Titel', :locale => :de)
-    assert_translated post, :de, :title, 'Titel'
-  end
-
   test "can translate boolean values" do
-    post = Post.create(:title => 'Titel', :published => true, :locale => :de)
+    I18n.locale = :de
+    post = Post.create(:title => 'Titel', :published => true)
     assert_translated post, :de, :published, true
   end
 
   test "can translate datetime values" do
+    I18n.locale = :de
     now = Time.now
-    post = Post.create(:title => 'Titel', :published_at => now, :locale => :de)
+    post = Post.create(:title => 'Titel', :published_at => now)
     assert_translated post, :de, :published_at, now
   end
 
   test "attributes= uses the given locale" do
     post = Post.create(:title => 'title')
-    post.attributes = { :title => 'Titel', :locale => :de }
+    I18n.locale = :de
+    post.attributes = { :title => 'Titel' }
     post.save
     post.reload
 
@@ -41,7 +39,8 @@ class Globalize3Test < Test::Unit::TestCase
   test "create on associations works" do
     blog = Blog.create
     blog.posts.create(:title => 'title')
-    blog.posts.create(:title => 'Titel', :locale => :de)
+    I18n.locale = :de
+    blog.posts.create(:title => 'Titel')
 
     assert_equal 2, blog.posts.size
     assert_translated blog.posts.first, :en, :title, 'title'
@@ -56,8 +55,10 @@ class Globalize3Test < Test::Unit::TestCase
   end
 
   test "saves a translations record for each locale using a given locale" do
-    post = Post.create(:title => 'Titel', :locale => :de)
-    post.update_attributes(:title => 'title', :locale => :en)
+    I18n.locale = :de
+    post = Post.create(:title => 'Titel')
+    I18n.locale = :en
+    post.update_attributes(:title => 'title')
 
     assert_equal 2, post.translations.size
     assert_translated post, :de, :title, 'Titel'
@@ -99,7 +100,8 @@ class Globalize3Test < Test::Unit::TestCase
 
   test "destroy destroys dependent translations" do
     post = Post.create(:title => "title")
-    post.update_attributes(:title => 'Titel', :locale => :de)
+    I18n.locale = :de
+    post.update_attributes(:title => 'Titel')
     assert_equal 2, PostTranslation.count
     post.destroy
     assert_equal 0, PostTranslation.count
@@ -119,11 +121,15 @@ class Globalize3Test < Test::Unit::TestCase
   end
 
   test "translated_locales returns locales that have translations" do
-    first = Post.create!(:title => 'title', :locale => :en)
-    first.update_attributes(:title => 'Title', :locale => :de)
+    I18n.locale = :en
+    first = Post.create!(:title => 'title')
+    I18n.locale = :de
+    first.update_attributes(:title => 'Title')
 
-    second = Post.create!(:title => 'title', :locale => :en)
-    second.update_attributes(:title => 'titre', :locale => :fr)
+    I18n.locale = :en
+    second = Post.create!(:title => 'title')
+    I18n.locale = :fr
+    second.update_attributes(:title => 'titre')
 
     assert_equal [:de, :en, :fr], Post.translated_locales
     assert_equal [:de, :en], first.translated_locales
@@ -150,13 +156,6 @@ class Globalize3Test < Test::Unit::TestCase
     assert_equal ['title 1', 'title 2'], Post.with_translations.map(&:title)
   end
 
-  test "translation_for ignores with_translations scope" do
-    post = with_locale(:de) { Post.create(:title => 'title de') }
-    with_locale(:en) { post.update_attributes(:title => 'title en') }
-    
-    assert_equal 'title en', Post.with_translations(:de).first.translation_for(:en).title
-  end
-
   test "a subclass of an untranslated model can translate attributes" do
     post = Post.create(:title => 'title')
     translated_comment = TranslatedComment.create(:post => post, :content => 'content')
@@ -169,13 +168,15 @@ class Globalize3Test < Test::Unit::TestCase
     post = Post.create(:title => 'title')
     translated_comment = TranslatedComment.create(:post => post, :content => 'content')
 
-    assert translated_comment.update_attributes(:content => 'Inhalt', :locale => :de)
+    I18n.locale = :de
+    assert translated_comment.update_attributes(:content => 'Inhalt')
     assert_translated translated_comment, :en, :content, 'content'
     assert_translated translated_comment, :de, :content, 'Inhalt'
   end
 
   test "calling translates a second times adds the new attributes to the translated attributes" do
-    page = Page.new :title => 'Wilkommen', :body => 'Ein body', :locale => :de
+    I18n.locale = :de
+    page = Page.new(:title => 'Wilkommen', :body => 'Ein body')
     assert_translated page, :de, :title, 'Wilkommen'
     assert_translated page, :de, :body, 'Ein body'
   end

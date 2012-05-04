@@ -31,12 +31,6 @@ class AttributesTest < Test::Unit::TestCase
     assert_equal({ 'id' => post.id, 'blog_id' => nil, 'title' => 'foo', 'content' => nil }, attributes)
   end
 
-  test "write_attribute for non-translated attributes should return the value" do
-    user = User.create(:name => 'Max Mustermann', :email => 'max@mustermann.de')
-    new_email = 'm.muster@mann.de'
-    assert_equal new_email, user.write_attribute('email', new_email)
-  end
-
   test 'translated_attribute_names returns translated attribute names' do
     assert_equal [:title, :content], Post.translated_attribute_names & [:title, :content]
   end
@@ -47,7 +41,8 @@ class AttributesTest < Test::Unit::TestCase
 
   test "a translated attribute reader returns the correct translation for a saved record after locale switching" do
     post = Post.create(:title => 'title')
-    post.update_attributes(:title => 'Titel', :locale => :de)
+    I18n.locale = :de
+    post.update_attributes(:title => 'Titel')
     post.reload
 
     assert_translated post, :en, :title, 'title'
@@ -98,7 +93,8 @@ class AttributesTest < Test::Unit::TestCase
 
   test "before_type_cast reader works for translated attributes" do
     post = Post.create(:title => 'title')
-    post.update_attributes(:title => "Titel", :locale => :de)
+    I18n.locale = :de
+    post.update_attributes(:title => "Titel")
 
     with_locale(:en) { assert_equal 'title', post.title_before_type_cast }
     with_locale(:de) { assert_equal 'Titel', post.title_before_type_cast }
@@ -133,13 +129,6 @@ class AttributesTest < Test::Unit::TestCase
       Post.create!(:title => 'Titel', :content => 'Inhalt')
     end
     assert_equal 'Titel', post.title(:de)
-  end
-
-  test 'modifying a translated attribute does not change the untranslated value' do
-    post = Post.create(:title => 'title')
-    before = post.untranslated_attributes['title']
-    post.title = 'changed title'
-    assert_equal post.untranslated_attributes['title'], before
   end
 
 end

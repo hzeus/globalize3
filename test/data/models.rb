@@ -3,7 +3,7 @@ class Translation < ActiveRecord::Base
 end
 
 class Post < ActiveRecord::Base
-  translates :title, :content, :published, :published_at, :versioning => true
+  translates :title, :content, :published, :published_at
   validates_presence_of :title
   scope :with_some_title, :conditions => { :title => 'some_title' }
 end
@@ -23,6 +23,7 @@ end
 
 class Validatee < ActiveRecord::Base
   translates :string
+  attr_accessible :string_confirmation
 end
 
 module Nested
@@ -51,6 +52,7 @@ end
 class User < ActiveRecord::Base
   translates :name
   validates_presence_of :name, :email
+  attr_accessible :email
 end
 
 class Migrated < ActiveRecord::Base

@@ -6,44 +6,34 @@ class DirtyTrackingTest < Test::Unit::TestCase
     assert_equal [], post.changed
 
     post.title = 'changed title'
-    assert_equal ['title'], post.changed
+    assert_equal ['title'], post.translation.changed
 
     post.content = 'changed content'
-    assert_included 'title', post.changed
-    assert_included 'content', post.changed
+    assert_included 'title', post.translation.changed
+    assert_included 'content', post.translation.changed
   end
 
   test "dirty tracking is not triggered when attribute does not change" do
     post = Post.create(:title => 'title', :content => 'content')
-    assert_equal [], post.changed
+    assert_equal [], post.translation.changed
 
     post.title = 'title'
-    assert_equal [], post.changed
+    assert_equal [], post.translation.changed
   end
 
   test 'dirty tracking works per a locale' do
     post = Post.create(:title => 'title', :content => 'content')
-    assert_equal [], post.changed
+    assert_equal [], post.translation.changed
 
     post.title = 'changed title'
-    assert_equal({ 'title' => ['title', 'changed title'] }, post.changes)
+    assert_equal({ 'title' => ['title', 'changed title'] }, post.translation.changes)
     post.save
 
     I18n.locale = :de
     assert_equal nil, post.title
 
     post.title = 'Titel'
-    assert_equal({ 'title' => [nil, 'Titel'] }, post.changes)
-  end
-
-  # ummm ... is this actually desired behaviour? probably depends on how we use it
-  test 'dirty tracking works after locale switching' do
-    post = Post.create(:title => 'title', :content => 'content')
-    assert_equal [], post.changed
-
-    post.title = 'changed title'
-    I18n.locale = :de
-    assert_equal ['title'], post.changed
+    assert_equal( [nil, 'Titel'] , post.translation.changes['title'])
   end
 
   test 'dirty tracking works on sti model' do
@@ -51,28 +41,18 @@ class DirtyTrackingTest < Test::Unit::TestCase
     assert_equal [], child.changed
 
     child.content = 'bar'
-    assert_equal ['content'], child.changed
+    assert_equal ['content'], child.translation.changed
 
     child.content = 'baz'
-    assert_included 'content', child.changed
-  end
-
-  test 'dirty tracking works on sti model after locale switching' do
-    child = Child.create(:content => 'foo')
-    assert_equal [], child.changed
-
-    child.content = 'bar'
-    I18n.locale = :de
-
-    assert_equal ['content'], child.changed
+    assert_included 'content', child.translation.changed
   end
 
   test 'dirty tracking works for blank assignment' do
     post = Post.create(:title => 'title', :content => 'content')
-    assert_equal [], post.changed
+    assert_equal [], post.translation.changed
 
     post.title = ''
-    assert_equal({ 'title' => ['title', ''] }, post.changes)
+    assert_equal({ 'title' => ['title', ''] }, post.translation.changes)
     post.save
   end
 
@@ -81,7 +61,7 @@ class DirtyTrackingTest < Test::Unit::TestCase
     assert_equal [], post.changed
 
     post.title = nil
-    assert_equal({ 'title' => ['title', nil] }, post.changes)
+    assert_equal({ 'title' => ['title', nil] }, post.translation.changes)
     post.save
   end
 

@@ -10,30 +10,22 @@ module Globalize
           options[:table_name] ||= "#{table_name.singularize}_translations"
           options[:foreign_key] ||= class_name.foreign_key
 
-          class_attribute :translated_attribute_names, :translation_options, :fallbacks_for_empty_translations
+          class_attribute :translated_attribute_names, :translation_options
           self.translated_attribute_names = []
           self.translation_options        = options
-          self.fallbacks_for_empty_translations = options[:fallbacks_for_empty_translations]
 
           include InstanceMethods
-          extend  ClassMethods, Migration
+          extend  ClassMethods
 
           translation_class.table_name = options[:table_name] if translation_class.table_name.blank?
 
           has_many :translations, :class_name  => translation_class.name,
                                   :foreign_key => options[:foreign_key],
                                   :dependent   => :destroy,
+                                  :autosave    => true,
                                   :extend      => HasManyExtensions
-
-          after_create :save_translations!
-          after_update :save_translations!
-
-          if options[:versioning]
-            ::ActiveRecord::Base.extend(Globalize::Versioning::PaperTrail)
-
-            translation_class.has_paper_trail
-            delegate :version, :versions, :to => :translation
-          end
+          accepts_nested_attributes_for :translations
+          attr_accessible :translations_attributes
 
         end
 
