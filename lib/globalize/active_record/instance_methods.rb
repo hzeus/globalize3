@@ -23,17 +23,13 @@ module Globalize
         translations.select{|translation| translation.locale == locale}.first
       end
 
-      def attribute_names
-        translated_attribute_names.map(&:to_s) + super
-      end
-
       def translated?(name)
         self.class.translated?(name)
       end
 
       def translated_attributes
         translated_attribute_names.inject({}) do |attributes, name|
-          attributes.merge(name.to_s => translation.send(name))
+          attributes.merge(name.to_s => translation.try(name))
         end
       end
 

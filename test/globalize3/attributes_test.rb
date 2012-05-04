@@ -21,10 +21,6 @@ class AttributesTest < Test::Unit::TestCase
     assert_equal 1, post.translations.length
   end
 
-  test "attribute_names returns translated and regular attribute names" do
-    assert_equal %w(blog_id content title), Post.new.attribute_names.sort & %w(blog_id content title)
-  end
-
   test "attributes returns translated and regular attributes" do
     post = Post.create(:title => 'foo')
     attributes = post.attributes.slice('id', 'blog_id', 'title', 'content')
