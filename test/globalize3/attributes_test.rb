@@ -3,6 +3,12 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class AttributesTest < Test::Unit::TestCase
+
+  test 'returns nil as locale for new values' do
+    translation = Post::Translation.new
+    assert_nil translation.locale
+  end
+
   test 'defines accessors for the translated attributes' do
     post = Post.new
     assert post.respond_to?(:title)

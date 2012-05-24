@@ -22,7 +22,7 @@ module Globalize
       end
 
       def locale
-        read_attribute(:locale).to_sym
+        read_attribute(:locale).try(:to_sym)
       end
 
       def locale=(locale)
