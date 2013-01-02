@@ -24,7 +24,7 @@ class TranslationClassTest < Test::Unit::TestCase
     post.locale = :de
     assert_equal 'de', post.read_attribute('locale')
   end
-  
+
   test "can create a translation class for a namespaced model" do
     assert_nothing_raised do
       module Foo
@@ -59,6 +59,12 @@ class TranslationClassTest < Test::Unit::TestCase
 
   test "required_translated_attributes do not include non-translated attributes" do
     assert_equal [:name], User.required_translated_attributes
+  end
+
+  test 'defines a to_s method' do
+    post = Post::Translation.new
+    post.locale = :de
+    assert_equal 'de', post.to_s
   end
 end
 
