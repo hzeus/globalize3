@@ -28,7 +28,12 @@ module Globalize
       def locale=(locale)
         write_attribute(:locale, locale.to_s)
       end
+
+      def to_s
+        I18n.t("globalize.translation.to_s", translated_locale: locale, default: locale.to_s)
+      end
     end
+
   end
 end
 
